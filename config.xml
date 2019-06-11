@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<widget xmlns   = "http://www.w3.org/ns/widgets"
+    xmlns:cdv="http://cordova.apache.org/ns/1.0"
+    id          = "com.rocksetta.knn_celebrity"
+    versionCode = "22"
+    version     = "1.30.22" >      <!-- Change this before each compile -->
+
+  <name>Party App: Celebrity Face Match</name>
+  <description>
+      Tensorflowjs in an Android App
+  </description>
+  
+  <author href="http://rocksetta.com">
+      Jeremy Ellis
+  </author>
+  
+  
+  <!-- all platforms -->
+  <preference name="phonegap-version" value="cli-8.0.0" />  
+
+ 
+ <preference name="orientation" value="default" /> 
+<!--   <preference name="orientation" value="portrait" /> -->
+  <preference name="fullscreen" value="true" />
+
+
+
+  <!-- Android only -->
+
+<platform name="android">
+  <preference name="android-installLocation" value="auto" />
+  <preference name="android-minSdkVersion" value="24" />
+  <preference name="android-targetSdkVersion" value="26" />
+  <preference name="SplashMaintainAspectRatio" value="true"/>
+  <preference name="SplashShowOnlyFirstTime" value="true"/>
+    
+<icon density="ldpi" src="res/icon/android/ldpi.png"/>
+<icon density="mdpi" src="res/icon/android/mdpi.png"/>
+<icon density="hdpi" src="res/icon/android/hdpi.png"/>
+<icon density="xhdpi" src="res/icon/android/xhdpi.png"/>
+<icon density="xxhdpi" src="res/icon/android/xxhdpi.png"/>
+<icon density="xxxhdpi" src="res/icon/android/xxxhdpi.png"/>
+ <!--  Portrait  -->
+<splash density="port-ldpi" src="res/screen/android/splash-port-ldpi.png"/>
+<splash density="port-mdpi" src="res/screen/android/splash-port-mdpi.png"/>
+<splash density="port-hdpi" src="res/screen/android/splash-port-hdpi.png"/>
+<splash density="port-xhdpi" src="res/screen/android/splash-port-xhdpi.png"/>
+<splash density="port-xxhdpi" src="res/screen/android/splash-port-xxhdpi.png"/>
+<splash density="port-xxxhdpi" src="res/screen/android/splash-port-xxxhdpi.png"/>
+ <!--  Landscape  -->
+ <!--
+
+        <splash density="land-ldpi" src="res/screen/android/splash-land-ldpi.png"/>
+        <splash density="land-mdpi" src="res/screen/android/splash-land-mdpi.png"/>
+        <splash density="land-hdpi" src="res/screen/android/splash-land-hdpi.png"/>
+        <splash density="land-xhdpi" src="res/screen/android/splash-land-xhdpi.png"/>
+        <splash density="land-xxhdpi" src="res/screen/android/splash-land-xxhdpi.png"/>
+        <splash density="land-xxxhdpi" src="res/screen/android/splash-land-xxxhdpi.png"/>
+        
+-->
+</platform>  
+    
+    <!-- needed for camera? -->  
+
+
+    <access origin="*" />    
+    <allow-intent href="https://www.rocksetta.com/party-app/*" />
+
+  <!--  <preference name="AndroidPersistentFileLocation" value="Internal" />  -->
+    <preference name="permissions" value="none" />   
+    <plugin name="cordova-plugin-whitelist" spec="~1" /> 
+    <plugin name="cordova-plugin-inappbrowser" spec="~3.0.0" />     
+    
+  <!--   <plugin name="cordova-plugin-file" spec="~6" source="npm" />  -->
+    
+  <!--    <plugin name="cordova-plugin-camera" source="npm" version="4.0.3" />-->
+    
+ 
+    
+ <plugin name="com.virtuoworks.cordova-plugin-canvascamera" spec="https://github.com/VirtuoWorks/CanvasCameraPlugin.git" />   
+    
+    
+    
+ <!--    <plugin name="com.virtuoworks.cordova-plugin-canvascamera" spec="https://github.com/hpssjellis/CanvasCameraPlugin" /> -->
+    <engine name="android" spec="~7.0.0" />
+</widget>

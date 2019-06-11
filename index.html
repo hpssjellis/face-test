@@ -1,0 +1,1038 @@
+<!DOCTYPE html>
+
+<script>
+
+var app = {
+    // Application Constructor
+    initialize: function() {
+        this.bindEvents();
+    },
+    // Bind Event Listeners
+    //
+    // Bind any events that are required on startup. Common events are:
+    // 'load', 'deviceready', 'offline', and 'online'.
+    bindEvents: function() {
+        document.addEventListener('deviceready', this.onDeviceReady, false);
+    },
+    // deviceready Event Handler
+    //
+    // The scope of 'this' is the event. In order to call the 'receivedEvent'
+    // function, we must explicitly call 'app.receivedEvent(...);'
+    onDeviceReady: function() {
+        window.open = cordova.InAppBrowser.open;
+        app.receivedEvent('deviceready');
+    },
+    // Update DOM on a Received Event
+    receivedEvent: function(id) {
+        document.getElementById('play').addEventListener('click', (function() {
+            this.onPlay();
+        }).bind(this), false);
+        document.getElementById('stop').addEventListener('click', (function() {
+            this.onStop();
+        }).bind(this), false);
+        document.getElementById('switch').addEventListener('click', (function() {
+            this.onSwitch();
+        }).bind(this), false);
+
+
+        if (window.plugin.CanvasCamera) {
+          window.plugin.CanvasCamera.initialize({
+                fullsize: window.document.getElementById('fullsize'),
+
+          });
+        }
+    },
+    onPlay: function() {
+        console.log('play');
+        if (window.plugin.CanvasCamera) {
+           var options = {
+              canvas: {
+                width: 640,
+                height: 480
+              },
+              capture: {
+                width: 640,
+                height: 480
+              },
+              use: 'file',
+              fps: 30,
+              flashMode: this.flash,
+              hasThumbnail: false,
+              thumbnailRatio: 1/6,
+              cameraFacing: this.position
+          };
+          window.plugin.CanvasCamera.start(options, function(error) {
+            console.log('[CanvasCamera start]', 'error', error);
+          }, function(data) {
+            // console.log('[CanvasCamera start]', 'data', data);
+          });
+        }
+     document.getElementById('myDiv01').innerHTML += ' Camera activated<br>' 
+       
+        
+     myRunFace() 
+
+        
+    },
+    flash: false,
+    position: 'front',
+    onSwitch: function() {
+        console.log('switch');
+        if (window.plugin.CanvasCamera) {
+            this.position = (this.position === 'front') ? 'back' : 'front';
+            window.plugin.CanvasCamera.cameraPosition(this.position, function(error) {
+                console.log('[CanvasCamera cameraPosition]', error);
+            }, function(data) {
+                console.log('[CanvasCamera cameraPosition]', 'data', data);
+            });
+        }
+    },
+    onStop: function() {
+        console.log('stop');
+        if (window.plugin.CanvasCamera) {
+            window.plugin.CanvasCamera.stop(function(error) {
+                console.log('[CanvasCamera stop]', 'error', error);
+            }, function(data) {
+                console.log('[CanvasCamera stop]', 'data', data);
+            });
+        }
+        
+        myStopAuto()  // stop auto generate
+    }
+};
+
+app.initialize();  
+    
+</script>
+
+<html>
+  <head>
+      <!--
+      Customize this policy to fit your own app's needs. For more guidance, see:
+          https://github.com/apache/cordova-plugin-whitelist/blob/master/README.md#content-security-policy
+      Some notes:
+          * gap: is required only on iOS (when using UIWebView) and is needed for JS->native communication
+          * https://ssl.gstatic.com is required only on Android and is needed for TalkBack to function properly
+          * Disables use of inline scripts in order to mitigate risk of XSS vulnerabilities. To change this:
+              * Enable inline JS: add 'unsafe-inline' to default-src
+
+      <meta http-equiv="Content-Security-Policy" content="default-src 'self' data:  https://ssl.gstatic.com 'unsafe-inline' 'unsafe-eval'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline' 'unsafe-eval'; media-src *; img-src 'self' data: content:;">
+      
+<meta http-equiv="Content-Security-Policy" content="default-src *; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline' 'unsafe-eval'"/>  
+ <meta http-equiv="Content-Security-Policy" content="default-src *; style-src 'self' https://www.rocksetta.com/party-app/ 'unsafe-inline'; script-src 'self' 'unsafe-inline' 'unsafe-eval'"/>  
+
+      
+            -->     
+<meta http-equiv="Content-Security-Policy" content="default-src *; style-src 'self'  'unsafe-inline'; script-src https://www.rocksetta.com/party-app/ 'self' 'unsafe-inline' 'unsafe-eval'"/>  
+  
+      
+      
+      
+      <meta name="format-detection" content="telephone=no">
+      <meta name="msapplication-tap-highlight" content="no">
+      <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width"> 
+      <link rel="stylesheet" type="text/css" href="go.css">
+      <title>Party App: Celebrity Face Match</title>
+  </head>
+<body>
+    
+    
+    
+<h3 align=center>Party App: Celebrity Face Match.</h3>
+<div class="app">
+    <div id="deviceready">
+        <canvas class="raster" id="fullsize"></canvas>
+        <canvas id="myInCanvas" width="640" height="480" style="display:none; border: 1px solid #ddd;  interpolation-mode: nearest-neighbor;" title="myInCavas: Shows the latest fit"></canvas><br>
+     <!--  <canvas id="myInCanvas" width="320" height="320" style="display:inline; border: 1px solid #ddd;  interpolation-mode: nearest-neighbor;" title="myInCavas: Shows the latest fit"></canvas><br>   -->
+   
+        <div class="actions">
+            <div class="action play" id="play">Start</div>
+            <div class="action switch" id="switch">Switch</div>
+            <div class="action stop" id="stop">Stop</div>
+
+        </div>
+        <div id="myDivTest" style="width:800px;  height:400px; overflow:scroll; ">...</div><br>
+    </div>
+</div>
+    <hr>
+<script type="text/javascript" src="cordova.js"></script>
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+<!-- Load Tensorflowjs from here -->
+<script src="https://www.rocksetta.com/party-app/tfjs13-1.js"> </script> 
+
+<!-- Load face-api from here -->
+<script src="https://www.rocksetta.com/party-app/face-api.min.js"></script>
+
+<!-- Load KNN Classifier from here -->
+<script src="https://www.rocksetta.com/party-app/knn-classifier0-2-2.js"></script> 
+
+
+
+
+ 
+<input type="hidden" id="myInFile" size="120" value="https://www.rocksetta.com/party-app/myClassifierModel01.json"> <br>
+<input type="hidden" id="myInText" size="120" value="https://www.rocksetta.com/party-app/myClassifierLinks.txt"> <br>
+
+
+
+   
+    
+    
+ <br><br>    
+<input type=checkbox id="myCheck01" onclick="{                                            
+    myChangeCheckBox()                                                                               
+}">Show zoomed 68 data points<br>
+<input type=checkbox id="myContinuous">Continuous<br>
+ 
+
+<input type="hidden" id="myInterval" value="2000" size="5"> 
+<input type="button" id="myButtonAuto" value="Reset" onclick="{takeAuto()}"> 
+<input type="button" value="Stop" onclick="{myStopAuto()}"><br><br>    
+<br><br>
+    
+ <!--   
+
+  
+Analyse every <input type="number" id="myInterval" value="2000" size="5"> milliseconds......<br>
+
+
+
+<input type=button value="checkInputs" onclick="{myShowInfo()}">   
+
+
+
+    
+  Train a few items with a group number and a text label<br>
+<input type=button value="Train. Get close, no bounding box used" onclick="{myNewTrain()}"> 
+<input type=number value=0 size=3 id="myClassNumber" onchange = "{
+   myTextChange()                                                       
+}">
+
+
+
+
+
+<input type=text id="myClassText" placeholder="Label for this trained class: example Cell Phone" value="Joe Smith"><br><br>
+
+ 
+<input type=button value="Save Classifier" onclick="{myClassifierSave()}"> <br><br>
+ 
+<input type=text id="myInFile" size=120 value="models/myClassifierModel01.json"> <br>
+
+<input type=button value="Load Classifier" onclick="{myClassifierLoad()}"> <br>   
+   
+-->
+
+
+<canvas id="my32x32CanvasA" width="640" height="480" style="display:inline; border: 1px solid #ddd;  interpolation-mode: nearest-neighbor;" title="my32x32CanvasA: interval snapshots, presently for training"></canvas>
+<br>
+<canvas id="myFaceCanvas" width="640" height="480" style="border: 1px solid #ddd;" title="myFaceCanvas: Zoomed in face"></canvas>
+<br>
+<canvas id="myVideoAsCanvas" width="640" height="480" style="border: 1px solid #ddd;" title="myVideoAsCanvas: back layer"></canvas><br>
+<canvas id="myBorderAsCanvas" style="position:relative; left:0px; top:-480px" title="myBorderAsCanvas: Layer with box, in front of myVideoAsCanvas interval snapshot"></canvas>
+
+  
+
+ 
+
+<!--
+
+<canvas id="my32x32CanvasA" width="320" height="320" style="display:inline; border: 1px solid #ddd;  interpolation-mode: nearest-neighbor;" title="my32x32CanvasA: interval snapshots, presently for training"></canvas>
+<br>
+<canvas id="myFaceCanvas" width="320" height="320" style="border: 1px solid #ddd;" title="myFaceCanvas: Zoomed in face"></canvas>
+<br>
+<canvas id="myVideoAsCanvas" width="320" height="320" style="border: 1px solid #ddd;" title="myVideoAsCanvas: back layer"></canvas><br>
+<canvas id="myBorderAsCanvas" style="position:relative; left:0px; top:-325px" title="myBorderAsCanvas: Layer with box, in front of myVideoAsCanvas interval snapshot"></canvas>
+
+    
+    -->
+    
+    
+    <!-- <canvas id="myBorderAsCanvas" style="position:relative; left:-325px" title="myBorderAsCanvas: Layer with box, in front of myVideoAsCanvas interval snapshot"></canvas> -->
+
+
+ <div id="myDiv01">...</div><br>     
+ <div id="myDiv02">...</div><br>     
+    
+<!-- <div id="myDivLoss">...</div><br> -->
+ 
+
+
+ 
+<!-- <div id="myDivSummary">...</div><br><br>   -->
+
+<textarea id="myArray01" rows="10" cols="170" style="display:none;">0,Megan_Fox,https://m.media-amazon.com/images/M/MV5BMTc5MjgyMzk4NF5BMl5BanBnXkFtZTcwODk2OTM4Mg@@._V1_UY209_CR3,0,140,209_AL_.jpg***  
+99,Kate_Winslet,https://m.media-amazon.com/images/M/MV5BODgzMzM2NTE0Ml5BMl5BanBnXkFtZTcwMTcyMTkyOQ@@._V1_UX140_CR0,0,140,209_AL_.jpg***</textarea> 
+ 
+ 
+
+ <!-- ************* Next we define the Javascript inside a web element so that the page can be refreshed dynamically **************-->
+ 
+ <!--  ************* The entire next line can be replaced with the <script> tag for a more conventional approch. ****************** -->
+
+<style id="myButton124" onload="{document.getElementById('myButton124').click()}" onclick="{
+
+ ///////////////////////////////////// Global Variables ////////////////////////////////                                                                                            
+
+let myDebug = false                // set to false for final versions    
+let myRun = true                                                                                           
+
+                                                                                       
+                                                                                           
+//position:relative; left:-650px;
+let myGroups = []
+let newArray = []  
+let newArray2 = []  
+let myFaceToClose = 0    // pixels to make bounding box bigger
+let myIncomingClassifier = []    
+let myIncomingImages = []  
+let myMatchArray = []     
+let myMatchCount = -1 
+let myShowDataPoints = false
+
+                                                                                           
+                                                                                                                            
+
+ ///////////////////////////////////// Canvas and video elements ////////////////////////////////                                                                                                   
+                                                                                             
+                                                                                             
+
+//////////////////////////////////////// knn classifier stuff///////////////////////////
+
+                                                                                            
+myCheckGroups   = async function() {  
+   document.getElementById('myDivLoss').innerHTML = ''  // clear it                                                                                          
+   for (let x=0;   x < myGroups.length; x++){
+                                                                                             
+      if (myGroups[x] == undefined) {
+            document.getElementById('myDivLoss').innerHTML += '<font color=red>#: '+ x + ', label: </font><br>'                                                                                 
+          } else {                                                                                       
+         document.getElementById('myDivLoss').innerHTML += '#: '+ x + ', label: '+ myGroups[x] + '<br>' 
+      }                                                                                       
+   } 
+ }                                                                                            
+                                                                                             
+
+                                                   
+myShowInfo = async function() {
+                                                                                             
+     myIn = document.getElementById('myArray01').value.split('***')    // made it global
+  
+                                                                                             
+   for (myIteration = 0;  myIteration < myIn.length; myIteration++){   
+                                                                                                   
+      myIncomingImages[myIteration] = []    // make new part of 2D array                                                                         
+      myIncomingImages[myIteration] = myIn[myIteration].split(',')    // [0] = groups,   [1] = labels,    [2] = Image URL                                                                                       
+      document.getElementById('myDiv02').innerHTML +=  myIncomingImages[myIteration][0]+`: `+myIncomingImages[myIteration][1]+ `<br>`                                                                                  
+   }                                                                                       
+}                                                                                           
+                                                                                           
+                                                                                           
+                                                                                           
+                                                                                           
+                                                                                           
+myShowHide = async function() {
+    if ( myShowDataPoints) {
+       document.getElementById('my32x32CanvasA').style.display = 'inline'  
+       document.getElementById('myFaceCanvas').style.display = 'inline'  
+       document.getElementById('myVideoAsCanvas').style.display = 'inline'  
+       document.getElementById('myBorderAsCanvas').style.display = 'inline'                                                                                    
+    } else {
+      document.getElementById('my32x32CanvasA').style.display = 'none'   
+      document.getElementById('myFaceCanvas').style.display = 'none'   
+      document.getElementById('myVideoAsCanvas').style.display = 'none'   
+      document.getElementById('myBorderAsCanvas').style.display = 'none'                                                                                       
+    }
+}                                                                                           
+                                                                                           
+                                                                                           
+ myChangeCheckBox = async function() {                                                                                          
+     if ( myShowDataPoints)  {myShowDataPoints = false} else {myShowDataPoints = true} 
+    console.log(myShowDataPoints)  
+    myShowHide()                                                                                       
+}                                                                                           
+                                                                                             
+                                                                                             
+myLoadManyImages = async function() {
+   cosole.log('Need to open textarea')
+   const myIn = document.getElementById('myArray01').value.split('***')
+  
+   cosole.log('Opened the textarea')                                                                                         
+   document.getElementById('myDivLoss').innerHTML = '' // clear it  
+                                                                                             
+   for (myIteration = 0;  myIteration < myIn.length; myIteration++){ 
+      myIncomingImages[myIteration] = []    // make new part of 2D array                                                                         
+      myIncomingImages[myIteration] = myIn[myIteration].split(',')    // [0] = groups,   [1] = labels,    [2] = Image URL
+      let myI = parseInt(myIncomingImages[myIteration][0])
+                                                                                         
+      let myFileName2 =  myIncomingImages[myIteration][2]    // the URL                                                                                   
+      if (myFileName2 != null) {
+        let img = new Image()
+        img.src = myFileName2
+        img.crossOrigin = 'Anonymous'                                                                                            
+                                                                                                                                                                                    
+        let can = document.getElementById('my32x32CanvasA');
+        let ctx = can.getContext('2d');  
+                                                                                             
+     //const getIngredients = async () => {}                                                                                        
+                                                                                             
+        img.onload = await async function() {
+            ctx.drawImage(img, 0, 0, img.width, img.height, 0, 0, can.width, can.height);                                         
+        }  // img  
+                                                                                             
+       const img2 = await tf.fromPixels(my32x32CanvasA);          // now lets classify the image                                                                                    
+       const myDetectMarks = await net.detectLandmarks(img2)                                                                                                                                                                                        
+
+       for (let j=0;  j < myDetectMarks._faceLandmarks.length; j++ ){  
+         newArray[j] = []                                                                                        
+         newArray[j][0] = myDetectMarks._faceLandmarks[j].x                                                                
+         newArray[j][1] = myDetectMarks._faceLandmarks[j].y  
+       }                                                                                          
+  
+       document.getElementById('myDivLoss').innerHTML += 'Checking ' + myI + '<br>'                                                                                  
+                                                                                   
+       const forwardParams = {inputSize: 'sm', scoreThreshold:0.5}   // 'xs' (224 x 224) | 'sm' (320 x 320) | 'md' (416 x 416) | 'lg' (608 x 608)  //0, 1, 2, 3
+       result2 = await faceapi.tinyYolov2(can, forwardParams) 
+       console.log(myI)  
+      // console.log(result2)  
+       if (result2.length > 0){     
+                                                                                             
+          myGroups[myI] =  myIncomingImages[myIteration][1]       // add the label to the myGroups array                                                             
+                                                                                         
+          classifier.addExample(tf.tensor2d(newArray, shape=[68,2]), myI);                                                                                                                                                                                                                                              
+          const myAddCount = classifier.getClassExampleCount()[myI]                                                                                     
+          document.getElementById('myDivLoss').innerHTML += myAddCount + ' times, Example Added: to group #: '+ myI +'<br>'     
+                                                                                             
+                                                                                             
+                                                                                             
+       /////////////////////////////// prove we got a face ///////////////////////////////
+ 
+                                                                                             
+      let { width, height } = faceapi.getMediaDimensions(can)
+      let canvas = document.getElementById('myBorderAsCanvas')
+      canvas.width = width
+      canvas.height = height
+      const forwardParams = {inputSize: 'sm', scoreThreshold: 0.5}
+      result2 = await faceapi.tinyYolov2(can, forwardParams)                                                                                        
+                                                                                        
+      faceapi.drawDetection('myBorderAsCanvas', result2.map(det => det.forSize(width, height)))   
+                                                                                             
+                                                                                             
+     let myCanvasElement4 = document.getElementById('myVideoAsCanvas');
+     let myCTX4 = myCanvasElement4.getContext('2d');
+     myCTX4.drawImage(can, 0, 0, myCanvasElement4.width, myCanvasElement4.height);
+                                      
+     let myCanvasElement3 = document.getElementById('myFaceCanvas');
+     let myCTX3 = myCanvasElement3.getContext('2d');
+                                                                                             
+     myCTX3.drawImage(myCanvasElement4, result2[0]._box._x-myFaceToClose, result2[0]._box._y-myFaceToClose, result2[0]._box._width+(2*myFaceToClose), result2[0]._box._height+(2*myFaceToClose), 0, 0, myCanvasElement3.width, myCanvasElement3.height);
+                                                                                         
+     let img3 = tf.fromPixels(myFaceCanvas);    // the bounded canvas                                                                                                                    
+     const myLandmarks = await net.detectLandmarks(img3)                                                                                                                                                                                      
+  
+     for (let j=0;  j < myLandmarks._faceLandmarks.length; j++ ){  
+       newArray2[j] = []                                                                                        
+       newArray2[j][0] = myLandmarks._faceLandmarks[j].x                                                                
+       newArray2[j][1] = myLandmarks._faceLandmarks[j].y  
+     }                                                                                          
+                                                                                                    
+    // myCTX3.drawImage(can, 0, 0, myCanvasElement3.width, myCanvasElement3.height);                                                                                                                                                                                            
+     const result = await classifier.predictClass(tf.tensor2d(newArray2, shape=[68,2]), 3);   // number of groups
+                                                                                              
+    faceapi.drawLandmarks(myCanvasElement3, myLandmarks, { lineWidth: 2, color: 'red' })    // may remove these eventually                                                                                                                                                                             
+                                                                                         
+                                                                                             
+                                                                                             
+                                                                                             
+                                                                                             
+                                                                                             
+                                                                                             
+                                                                                             
+                                                                                             
+        ///////////////////////////////// end proof ///////////////////////////////////                                                                                     
+                                                                                             
+                                                                                             
+       }                                                                                      
+                                                                                             
+     }     // if                                                                                                                                                                                            
+   }       // for                                                                        
+  // console.log(myIncomingImages)                                                  
+  // console.log(myGroups)                                                                                        
+                                                                                             
+}                                                                            
+
+myRunFace = async function() {
+   document.getElementById('myDivTest').innerHTML =  ''  // clear the output area  
+   document.getElementById('myDiv01').innerHTML = ''     // clear the message area                                                                                      
+  // document.getElementById('myContinuous').checked = false    // force to stop at a match                                                                                     
+   
+   myLoadLinks()   
+                                                                                           
+   if (myDebug){                                                                                        
+     console.log('Classfier Links loaded')                                                                                       
+     document.getElementById('myDiv01').innerHTML +=  'Classfier Links loaded'    
+   }
+                                                                                           
+   classifier = knnClassifier.create();  
+   if (myDebug){                                                                                            
+      console.log('knn-classifier loaded')                                                 
+      document.getElementById('myDiv01').innerHTML +=  'knn-classifier loaded'    
+   }
+                                                                                           
+   net = new faceapi.FaceLandmark68TinyNet()       // made it global                                                                                      
+   await net.load('https://www.rocksetta.com/party-app/face_landmark_68_tiny_model-weights_manifest.json') 
+                                                                                           
+   if (myDebug){                                                                                            
+   console.log('face_landmark_68_tiny_model loaded')
+   }
+                                                                                           
+   await faceapi.loadTinyYolov2Model('https://www.rocksetta.com/party-app/')
+   if (myDebug){                                                                                        
+     console.log('loadTinyYolov2Model loaded')
+   }                                                                                          
+   myShowHide()  
+  // console.log('Hiding Data Images')   
+   if (myDebug){                                                                                        
+      document.getElementById('myDiv01').innerHTML += 'myRunFace Done<br>'
+   }     
+                                                                                           
+                                                                                           
+   myClassifierLoad()
+   if (myDebug){                                                                                        
+     document.getElementById('myDiv01').innerHTML += 'my classifier loaded<br>'
+   }     
+                                                                                           
+                                                                                           
+   takeAuto()  
+   if (myDebug){                                                                                        
+     document.getElementById('myDiv01').innerHTML += 'myAuto active<br>'       
+   }        
+                                                                                           
+  // myShowInfo()                                                                                        
+                                                                                           
+}
+
+
+myLoadLinks   = async function(){                                                                                          
+ // fetch all the information for the hidden textarea myArray01  
+   //document.getElementById('myArea01').value =   'wow'
+
+   const response = await fetch(document.getElementById('myInText').value)   
+   const myIncoming =  await response.text()                                                                                       
+  // console.log(myIncoming)                                                                                      
+   document.getElementById('myArray01').value = myIncoming                                                                                
+                                                                                     
+                                                                                           
+}                                                                                           
+                                                                                           
+myTextChange = async function(){     
+    if (parseInt(document.getElementById('myClassNumber').value) < 0 ){
+           document.getElementById('myClassNumber').value = 0                                                                                  
+    }                         
+    if (myGroups[document.getElementById('myClassNumber').value] == undefined){
+        document.getElementById('myClassText').value    = ''   // clear the box                                                                                     
+      } else {                                                                                         
+        document.getElementById('myClassText').value    = myGroups[document.getElementById('myClassNumber').value] 
+    }
+}                                                                                             
+
+myNewTrain = async function(){   
+
+   let myCanvasElement = document.getElementById('my32x32CanvasA');
+   let myCTX = myCanvasElement.getContext('2d');
+   myCTX.drawImage(myVideoStream, 0, 0, myCanvasElement.width, myCanvasElement.height);   
+                                     
+   const img1 = tf.fromPixels(my32x32CanvasA);                                                                                            
+   const myDetectMarks = await net.detectLandmarks(img1)                                                                                                                                                                                        
+
+   for (let j=0;  j < myDetectMarks._faceLandmarks.length; j++ ){  
+      newArray[j] = []                                                                                        
+      newArray[j][0] = myDetectMarks._faceLandmarks[j].x                                                                
+      newArray[j][1] = myDetectMarks._faceLandmarks[j].y  
+   }                                                                                          
+                                                                                               
+   classifier.addExample(tf.tensor2d(newArray, shape=[68,2]), parseInt(document.getElementById('myClassNumber').value));                                                              
+   myGroups[document.getElementById('myClassNumber').value] = document.getElementById('myClassText').value
+ 
+   const myAddCount = classifier.getClassExampleCount()[document.getElementById('myClassNumber').value]
+   const myGroupNumber =  document.getElementById('myClassNumber').value                                                                                         
+   document.getElementById('myDivLoss').innerHTML = myAddCount + ' times, Example Added: to group #: '+ myGroupNumber 
+                                                                                     
+                                                                                             
+                                                                                                                                                                                   
+                                                                                             
+                                                                                             
+                                                                                             
+}
+                                                                                             
+                                                                                             
+ 
+                                                                                             
+                                                                                             
+                                                                                             
+                                                                                             
+                                                                                             
+                                                                                             
+myPredict = async function(){
+                                                                                           
+  if (myRun){                                                                                         
+  document.getElementById('myDivTest').innerHTML +='.'
+  let scoreThreshold = 0.5   //0.5
+  let sizeType = 'sm'      // 'xs' (224 x 224) | 'sm' (320 x 320) | 'md' (416 x 416) | 'lg' (608 x 608)  //0, 1, 2, 3
+  let modelLoaded = false
+  let forwardTimes = []
+                                                                                             
+  let myCanvasElement = document.getElementById('my32x32CanvasA');
+  let myCTX = myCanvasElement.getContext('2d');                                                                                             
+
+     //////////////////////////////////////// for phonegap //////////////////////////////////////////                                                                                              
+                       
+  let myCanvasGap = document.getElementById('fullsize');                                                                                       
+  myCTX.drawImage(myCanvasGap, 0, 0, myCanvasElement.width, myCanvasElement.height);                                                                                          
+  tf.nextFrame()                                                                                         
+                                                                                           
+                                                                                           
+                                                                                           
+ // myCTX.drawImage(myVideoStream, 0, 0, myCanvasElement.width, myCanvasElement.height);  
+                                                                                            
+  if (classifier.getNumClasses() >= 1){    // have groups to rate
+                                            
+      let { width, height } = faceapi.getMediaDimensions(myCanvasElement)
+      let canvas = document.getElementById('myBorderAsCanvas')
+      canvas.width = width
+      canvas.height = height
+      const forwardParams = {inputSize: sizeType, scoreThreshold}
+      result2 = await faceapi.tinyYolov2(myCanvasElement, forwardParams)                                                                                        
+
+    if (result2.length >= 1){     // box drawing working   
+                                                                                             
+      
+      faceapi.drawDetection('myBorderAsCanvas', result2.map(det => det.forSize(width, height)))   
+     tf.nextFrame()                                                                                        
+                                                                                             
+     let myCanvasElement4 = document.getElementById('myVideoAsCanvas');
+     let myCTX4 = myCanvasElement4.getContext('2d');
+                                                                                           
+       //////////////////////////////////////// for phonegap //////////////////////////////////////////                                                                                        
+                                                                                                                                                                                                                   
+     let myCanvasGap2 = document.getElementById('fullsize');                                                                                    
+     myCTX4.drawImage(myCanvasGap2, 0, 0, myCanvasElement4.width, myCanvasElement4.height);                                                                                         
+     tf.nextFrame()                                                                                      
+                                                                                           
+                                                                                           
+                                                                                           
+                                                                                           
+    // myCTX4.drawImage(myVideoStream, 0, 0, myCanvasElement4.width, myCanvasElement4.height);
+                                      
+     let myCanvasElement3 = document.getElementById('myFaceCanvas');
+     let myCTX3 = myCanvasElement3.getContext('2d');
+                                                                                                  
+     myCTX3.clearRect(0,0, myCanvasElement3.width, myCanvasElement3.height)                                                                                      
+     tf.nextFrame()                                                                            
+     
+     /////////////////////////////////////////////////////                                                                                      
+     //make the height same as the orignal  but calulate a converted for the width.
+     const myConvert = ( parseFloat(myCanvasElement3.height) / parseFloat( result2[0]._box._height)   )                                                                                 
+                                                                                           
+      myCanvasElement3.width = ( parseFloat(result2[0]._box._width) * parseFloat(myConvert) ) 
+
+    //  myCanvasElement3.height = parseFloat( result2[0]._box._height )                                                                                     
+    //  myCanvasElement3.width = parseFloat( result2[0]._box._width )                                                                                     
+                                                                                           
+                                                                                           
+       
+  //    document.getElementById('myDiv01').innerHTML += '<br> myConvert: '+myConvert+' ,myCanvasElement3.width: '+myCanvasElement3.width+
+  //          ', result2[0]._box._height: '+result2[0]._box._height+' ,result2[0]._box._width: '+result2[0]._box._width+                                                                                
+                                                                                                                                                                            
+                                                                                           
+   //  myCTX3.drawImage(myCanvasElement4, result2[0]._box._x-myFaceToClose, result2[0]._box._y-myFaceToClose, result2[0]._box._width+(2*myFaceToClose), result2[0]._box._height+(2*myFaceToClose));      // see if this keeps the normal size                                                                                   
+     myCTX3.drawImage(myCanvasElement4, result2[0]._box._x-myFaceToClose, result2[0]._box._y-myFaceToClose, result2[0]._box._width+(2*myFaceToClose), result2[0]._box._height+(2*myFaceToClose), 0, 0, myCanvasElement3.width, myCanvasElement3.height);
+   //     myCTX3.drawImage(myCanvasElement4, result2[0]._box._x-myFaceToClose, result2[0]._box._y-myFaceToClose, result2[0]._box._width+(2*myFaceToClose), result2[0]._box._height+(2*myFaceToClose), 0, 0, result2[0]._box._width+(2*myFaceToClose), result2[0]._box._height+(2*myFaceToClose));
+   
+                                                                                           
+                                                                                           
+     tf.nextFrame()                                                                                    
+     let img3 = tf.fromPixels(myFaceCanvas);    // the bounded canvas                                                                                                                    
+     const myLandmarks = await net.detectLandmarks(img3)    
+                                                                                           
+     newArray2.length = 0   // attempt to zero the array
+     for (let j=0;  j < myLandmarks._faceLandmarks.length; j++ ){  
+       newArray2[j] = []                                                                                        
+       newArray2[j][0] = myLandmarks._faceLandmarks[j].x                                                                
+       newArray2[j][1] = myLandmarks._faceLandmarks[j].y  
+     }                                                                                          
+                                                                                                    
+     myCTX.drawImage(myCanvasGap2, 0, 0, myCanvasElement.width, myCanvasElement.height);  
+     tf.nextFrame()                                                                                      
+    // myCTX.drawImage(myVideoStream, 0, 0, myCanvasElement.width, myCanvasElement.height);                                                                                                                                                                                            
+     const result = await classifier.predictClass(tf.tensor2d(newArray2, shape=[68,2]), 1);   // number of groups
+                                                                                              
+    faceapi.drawLandmarks(myCanvasElement3, myLandmarks, { lineWidth: 4, color: 'red' })    // may remove these eventually 
+    tf.nextFrame()                                                                                       
+    myMatchCount += 1
+    myMatchArray[myMatchCount] = result.classIndex 
+   // console.log(document.getElementById('myContinuous').value)
+    if (document.getElementById('myContinuous').checked == false){                                                                                       
+                                                                                           
+    for (let myIt = 0 ; myIt < myMatchArray.length-1; myIt++){  // don't check this one against itself  
+     // console.log(myMatchArray[myIt])                                                                                              
+      if (myMatchArray[myIt] == myMatchArray[myMatchCount]){   // check if this one was matched before  
+        // console.log(myMatchArray[myIt] + ' == ' +myMatchArray[myMatchCount])  
+         document.getElementById('myDivTest').innerHTML = '<font color=red>Done:<br></font>'+ document.getElementById('myDivTest').innerHTML                                                                                  
+         myStopAuto()                                                                                     
+      }  
+    }  // end for     
+                                                                                           
+    } //  end if continuous not checked   
+                                                                                           
+                                                                                           
+                                                                                           
+   // myLoadOneImage(result.classIndex)        // sadens me not to be able to do this for licensing reasons                                                                                  
+                                                                                             
+                                                                                             
+   // document.getElementById('myDivTest').innerHTML = 'Group: ' + result.classIndex + ', '+ 
+  //     Math.round(result.confidences[result.classIndex]*100)+ '% ' + myGroups[result.classIndex]+ '<br>'  + 
+  //     document.getElementById('myDivTest').innerHTML
+                                                                                           
+                     
+  //  document.getElementById('myDivTest').innerHTML = Math.round(result.confidences[result.classIndex]*100)+ '% ' + 
+   //   myGroups[result.classIndex]+ '<br>' + document.getElementById('myDivTest').innerHTML   
+                                                                                           
+                                                                                         
+  //  document.getElementById('myDivTest').innerHTML =  '<div color=red onclick={myLoadOneImage('+result.classIndex+')}>...'+myGroups[result.classIndex]+ '...</div>' + document.getElementById('myDivTest').innerHTML                                                                                        
+                                                                                                                
+   // document.getElementById('myDivTest').innerHTML =  '<div style=color:red; onclick={myLoadOneImage('+result.classIndex+')}>This match: '+myGroups[result.classIndex]+ '</div>' + document.getElementById('myDivTest').innerHTML                                                                                        
+                                                                                                                 
+  //  document.getElementById('myDivTest').innerHTML =  'Nearest: <span style=color:blue; onclick={myLoadOneImage('+result.classIndex+')}>'+myGroups[result.classIndex]+ '</span><br>' + document.getElementById('myDivTest').innerHTML                                                                                        
+
+  // document.getElementById('myDivTest').innerHTML =  `<a href='https://www.google.com/search?&tbm=isch&q=`+myGroups[result.classIndex]+`' target='_blank'>Nearest Match: `+myGroups[result.classIndex]+ `</a><br>` + document.getElementById('myDivTest').innerHTML                                                                                        
+ 
+ //document.getElementById('myDivTest').innerHTML =  `<a href='https://www.google.com/search?&tbm=isch&q=`+myGroups[result.classIndex]+`' target='_system'>Nearest Match: `+myGroups[result.classIndex]+ `</a><br>` + document.getElementById('myDivTest').innerHTML                                                                                        
+  
+// document.getElementById('myDivTest').innerHTML =  `<a onclick=window.open('https://www.google.com/search?&tbm=isch&q=`+myGroups[result.classIndex]+`','_self')>Nearest Match: `+myGroups[result.classIndex]+ `</a><br>` + document.getElementById('myDivTest').innerHTML                                                                                        
+                                                                                            
+ //<input type=button value='Google _system' style='font-size:30px' onclick='{window.open('http://www.google.com','_system');}'><br>                                                                                          
+                                                                                           
+ if (myDebug){ 
+   document.getElementById('myDivTest').innerHTML =  `<input type=button onclick=window.open('https://www.google.com/search?&tbm=isch&q=`+myGroups[result.classIndex]+`','_self') value=`+myGroups[result.classIndex]+ `>x:${Math.round(newArray2[0][0])}, y:${Math.round(newArray2[0][1])}<br>` + document.getElementById('myDivTest').innerHTML                                                                                        
+ } else {
+   document.getElementById('myDivTest').innerHTML =  `<input type=button onclick=window.open('https://www.google.com/search?&tbm=isch&q=`+myGroups[result.classIndex]+`','_self') value=`+myGroups[result.classIndex]+ `><br>` + document.getElementById('myDivTest').innerHTML                                                                                        
+                                                                                          
+ }
+                                                                                          
+                                                                                         
+                                                                                           
+                                                                                           
+                                                                                           
+  } // end box drawing OK                                                                                             
+ } else {(console.log('Need to train groups'))}
+}   // end myRun                                                                                             
+}  
+                                                                                             
+    
+                                                                                             
+                                                                                             
+  
+/////////////////////////////////////////// NEW SAVING and LOADING functions ///////////////////////////////////////////                                                                                      
+
+                                                                                           
+myLoadOneImage  = async function(myGroupNumber){ 
+   let myUrlArray = []                                                                                        
+   const myIn = document.getElementById('myArray01').value.split('***')                                                                                        
+   for (myIteration = 0;  myIteration < myIn.length; myIteration++){ 
+      myIncomingImages[myIteration] = []    // make new part of 2D array                                                                         
+      myIncomingImages[myIteration] = myIn[myIteration].split(',')    // [0] = groups,   [1] = labels,    [2] = Image URL
+      let myI = parseInt(myIncomingImages[myIteration][0])  
+       myUrlArray[myI] =  myIncomingImages[myIteration][2]   
+                                                                                           
+   }  //set up myIncomingImages array    **** note: Thisarray only keeps one URL                                                                                     
+                                                                                           
+      // console.log(myUrlArray)                                                                                    
+                                                                                           
+      let myFileName2 =  myUrlArray[myGroupNumber]    // the URL                                                                                   
+      if (myFileName2 != null) {
+        let img = new Image()
+        img.src = myFileName2
+        img.crossOrigin = 'Anonymous'                                                                                            
+                                                                                                                                                                                    
+        let can6 = document.getElementById('myInCanvas');
+        let ctx6 = can6.getContext('2d');  
+                                                                                                                                                                                                                                                                             
+        img.onload = await async function() {
+            ctx6.drawImage(img, 0, 0, img.width, img.height, 0, 0, can6.width, can6.height);                                         
+        } 
+                                                                                                                
+     }                                                                                         
+                                                                                           
+ }                                                                                          
+                                                                                             
+ myDefineClassifierModel = async function(myPassedClassifier){
+
+    let myLayerList = []
+     myLayerList[0] = []    // for the input layer name as a string
+     myLayerList[1] = []    // for the input layer
+     myLayerList[2] = []    // for the concatenate layer name as a string
+     myLayerList[3] = []    // for the concatenate layer
+                                                                                                                                                                                        
+    let myMaxClasses =    myPassedClassifier.getNumClasses()                                                                                      
+    //console.log('myPassedClassifier.getNumClasses()')
+    //console.log(myMaxClasses)                                                                                      
+                                                                                             
+    for (let myClassifierLoop = 0; myClassifierLoop < myMaxClasses; myClassifierLoop++ ){      // need number of classifiers                                        
+                                                                                         
+      //console.log(myPassedClassifier.getClassifierDataset()[myClassifierLoop])                                                                                                                                                           
+      //console.log('shape first layer =')                                                                                                                                                           
+      //console.log(myPassedClassifier.getClassifierDataset()[myClassifierLoop].shape[0])
+                                                                                             
+      myLayerList[0][myClassifierLoop] = 'myInput'  + myClassifierLoop                  // input name as a string
+      console.log('define input for'+myClassifierLoop)                                                                                       
+      myLayerList[1][myClassifierLoop] = tf.input({shape: myPassedClassifier.getClassifierDataset()[myClassifierLoop].shape[0], name: myLayerList[1][myClassifierLoop]});      // Define input layer
+      console.log('define dense for: '+myClassifierLoop)
+      myLayerList[2][myClassifierLoop] = 'myInput'+myClassifierLoop+'Dense1'    // concatenate as a string                                                                                  
+      myLayerList[3][myClassifierLoop] = tf.layers.dense({units: 136, name: myGroups[myClassifierLoop]}).apply(myLayerList[1][myClassifierLoop]);             //Define concatenate layer                                                                          
+                                                                                           
+    }
+                                                                                             
+
+   // what the layers used to look like before the loop                                                                                            
+   //const myInput2 = tf.input({shape: [1], name: 'myInput2'});
+   //const myInput2Dense1 = tf.layers.dense({units: 20, name: 'myInput2Dense1'}).apply(myInput2);
+
+                                                                                             
+   console.log('Concatenate Paths')                                                                                                                                                                                          
+   const myConcatenate1 = tf.layers.concatenate({axis : 1, name: 'myConcatenate1'}).apply(myLayerList[3]);    // send the entire list of dense                                                                                           
+   const myConcatenate1Dense4 = tf.layers.dense({units: 1, name: 'myConcatenate1Dense4'}).apply(myConcatenate1)                                                                                              
+ 
+   console.log('Define Model')                                                                                                                                                                                       
+   const myClassifierModel = tf.model({inputs: myLayerList[1], outputs: myConcatenate1Dense4});    // This would be a global model. With list of inputs as an array                                                                                                                                                                                         
+   //myClassifierModel.summary()    // show a summary of the load
+   //console.log('myClassifierModel.layers[myMaxClasses]')     
+   //console.log(myClassifierModel.layers[myMaxClasses])
+   myPassedClassifier.getClassifierDataset()[0].print(true)                                                                                            
+                                                                                             
+   for (let myClassifierLoop = 0; myClassifierLoop < myMaxClasses; myClassifierLoop++ ){   // since the first layers are inputs must add maxClasses   
+     const myInWeight = await myPassedClassifier.getClassifierDataset()[myClassifierLoop]                                                                                        
+     myClassifierModel.layers[myClassifierLoop + myMaxClasses].setWeights([myInWeight, tf.ones([136])]);       //model.layers[0].setWeights([tf.ones([10, 2]), tf.ones([2])]);                                                                                        
+
+  }                                                                                           
+                                                                                             
+ return  myClassifierModel                                                                                        
+}                                                                                             
+                                                                                             
+                                                                                             
+                                                                                             
+                                                                                             
+                                                                                             
+                                                                                                                                     
+                                                                                             
+                                                                                            
+                                                                                             
+///////////////////////////////////////////////////////////////////////////////                                                                                             
+myClassifierSave  = async function(){
+                                                                                                                                                                                        
+   const myClassifierModel2 = await myDefineClassifierModel(classifier)         // pass global classifier                                                                                                                                                                                                                                                                      
+   myClassifierModel2.save('downloads://myClassifierModel01')  
+   //myClassifierModel2.summary(null,null,x => {document.getElementById('myDivSummary').innerHTML += x + '<br>'});                                                                                                                                                                                                                                                                             
+}
+                                                                                             
+ 
+                                                                                             
+                                                                                             
+/////////////////////////////////////////////                                                                                             
+mySetClassiferModelWeights  = async function(){
+                                                                                             
+                                                                                             
+}                                                                                              
+  
+                                                                                                
+                                                                                             
+//////////////////////////////////////////////////////////////////////////////
+myClassifierLoad  = async function(){
+   // note global variable called        myIncomingClassifier        
+                                                                                             
+   const myLoadedModel  = await	tf.loadModel(document.getElementById('myInFile').value)                                                                                          
+   console.log('myLoadedModel.layers.length')   
+   console.log(myLoadedModel.layers.length) 
+                                           
+                                           
+  // console.log('myLoadedModel.layers[0].batchInputShape[1]')   
+  // console.log(myLoadedModel.layers[0].batchInputShape[1] )       
+                                                                                   
+  const myMaxLayers = myLoadedModel.layers.length
+  const myDenseEnd =  myMaxLayers - 2                                                                                          
+  const myDenseStart = myDenseEnd/2         // assume 0 = first layer: if 6 layers 0-1 input, 2-3 dense, 4 concatenate, 5 dense output                                                                                  
+                                                                                            
+   for (let myWeightLoop = myDenseStart; myWeightLoop < myDenseEnd; myWeightLoop++ ){      // need number of classifiers                                        
+                                              
+      // console.log('myLoadedModel.layers['+myWeightLoop+']')   
+      // console.log(myLoadedModel.layers[myWeightLoop])          
+     // console.log('myLoadedModel.layers['+myWeightLoop+'].getWeights()[0].print(true)') 
+     // myLoadedModel.layers[myWeightLoop].getWeights()[0].print(true)                                                                                        
+      myIncomingClassifier[myWeightLoop - myDenseStart] =  myLoadedModel.layers[myWeightLoop].getWeights()[0] 
+      myGroups[myWeightLoop - myDenseStart] =  myLoadedModel.layers[myWeightLoop].name     // hopefully the name is the group name                                                                                     
+   }
+ // console.log('Printing all the incoming classifiers')
+ // for (x=0;  x < myIncomingClassifier.length ; x++){
+ //   myIncomingClassifier[x].print(true)                                                                                          
+ // }                                                                                           
+  console.log('Activating Classifier')   
+  
+  classifier.dispose() // clear old classifier 
+  classifier.setClassifierDataset(myIncomingClassifier)  
+  console.log('Classifier loaded')                                                                                              
+                                                                                             
+}                                                                                             
+                                                                                             
+                                                                                             
+                                                                                             
+                                                                                             
+                                                                                             
+                                                                                             
+                                                                                             
+                                                                                                                                                                                         
+                                                                                             
+                                                                                             
+                                                                                             
+                                                                                             
+                                                                                             
+            
+///////////////////////////////////// End KNN- Classifier stuff ///////////////////////////////////// 
+                                                                                             
+                                                                                             
+                                                                                             
+                                                                                             
+                                                                                             
+                                                                                             
+///////////////////////////////////// webcam stuff /////////////////////////////////////                                                                                             
+ 
+                                                                                             
+var myVideoStream = document.getElementById('myVideoElement')     // make it a global variable
+var myStoredInterval = 0
+
+                                                                                             
+                                                                                             
+stopVideo = async function() {  
+  clearInterval(myStoredInterval)   // god idea to stop the auto snapshot taking                                                                                         
+  myVideoStream.srcObject.getTracks().forEach(track => track.stop())  
+}
+   
+   
+                                                                                             
+                                                                                             
+                                                                                             
+getVideo = async function() {  
+  const myCamera = await document.getElementById('myCheck').value
+                                                                                     
+  navigator.getMedia = navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia || navigator.msGetUserMedia;
+  navigator.getMedia({video: { facingMode: myCamera }, audio: false},
+                     
+    function(stream) {
+      myVideoStream.srcObject = stream   
+      myVideoStream.play();
+  }, 
+                     
+   function(error) {
+     alert('webcam not working');
+  });
+}
+   
+                                                                                             
+                                                                                             
+
+                                                                                             
+takeAuto = async function(){  
+     myRun = true                                                                                      
+     document.getElementById('myDivTest').innerHTML = '<br><br>'+ document.getElementById('myDivTest').innerHTML                                                                                       
+     document.body.style.backgroundColor = 'white'                                                                                     
+     myMatchCount = -1    // reset match array
+     myMatchArray.length = 0                                                 
+   // console.log(myMatchArray)                                                                                       
+                                                                                 
+    clearInterval(myStoredInterval)                                                                                          
+    myStoredInterval = setInterval(async function(){                                                                                         
+       await myPredict()                                                                                   
+   }, document.getElementById('myInterval').value);        
+}
+  
+ 
+                                                                                             
+                                                                                             
+myStopAuto  = async function(){ 
+     myRun=false
+     myMatchCount = -1    // reset match array
+     myMatchArray.length = 0                                                                                         
+    clearInterval(myStoredInterval)  
+    document.body.style.backgroundColor = 'lightblue'                                                                                       
+}                                                                                            
+  
+                                                                                             
+                                                                                             
+                                                                                             
+ ///////////////////////////////////////////// Done Webcam functions ////////////////////////////////////////                                                                                               
+                                                                                             
+ myLoadUrl = async function(){
+  //alert('The test function will need to be changed if other models are loaded')                                                                                             
+  document.getElementById('myDivTest').innerHTML = 'Expect major code changes if you load a different model than what is expected'  
+  const myFileName = document.getElementById('myInFile').value
+  if (myFileName != null){  
+    model = await tf.loadModel(myFileName);     // should make the model a global variable
+    document.getElementById('myDivSummary').innerHTML = ''      
+  //  await model.summary(null,null,x => {document.getElementById('myDivSummary').innerHTML += x + '<br>'});
+   // await myPredict()
+  }                                                                           
+}                                                                                             
+                                                                                             
+
+                                                                                             
+                                                                                  
+                                                                                             
+                                                                                             
+/////////////////////////////////// END ALL FUNCTIONS ///////////////////////////////////////                                                                                             
+
+//auto run these commands Think of this as the main funciton                                                                                          
+                                                                                           
+                                                                               
+                                                                                           
+                                                                                             
+                                                                                             
+//////////////////////////////////   WEIRD STYLE TAG THAT IS ACTUALLY A DYNAMIC SCRIPT TAG ///////////////////                                                                                          
+                                                                                             
+                                                                                             
+}"></style>
+<!-- If you replaced the <style> tag with a <script> tag don't forget to change the above line to just </script>  -->
+ 
+ 
+
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+<div id='myDiv123'>...</div><br>
+    
+    
+  
+
+    
+    
+    
+</body>
+</html>
